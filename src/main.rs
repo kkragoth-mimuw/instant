@@ -8,9 +8,9 @@ fn main() {
         .parse("n = 2*(5+1); 4;")
         .unwrap();
 
-    for stmt in stmts.iter() {
-        println!("{:?}", stmt);
-    }
+    // for stmt in stmts.iter() {
+    //     println!("{:?}", stmt);
+    // }
 
     let code = llvm::compile(&stmts);
 
