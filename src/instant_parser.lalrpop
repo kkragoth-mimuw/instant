@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use instant::ast::{Stmt, Expr, Opcode}; // (0)
+use crate::ast::{Stmt, Expr, Opcode}; // (0)
 
 grammar;
 

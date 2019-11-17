@@ -1,7 +1,7 @@
 // auto-generated: "lalrpop 0.17.2"
-// sha256: 2a3dc4d78126e0b2852895bf51a4961120d6df9f95a40efbbc27b74fb50b8
+// sha256: 74a389b7bab0f42ca2e12ee4d685ea82eb2b72f06a91af28d9df106acdd71a1a
 use std::str::FromStr;
-use instant::ast::{Stmt, Expr, Opcode};
+use crate::ast::{Stmt, Expr, Opcode};
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
 #[allow(unused_imports)]
@@ -12,7 +12,7 @@ mod __parse__Expr {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use instant::ast::{Stmt, Expr, Opcode};
+    use crate::ast::{Stmt, Expr, Opcode};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     #[allow(unused_imports)]
@@ -1153,7 +1153,7 @@ mod __parse__Stmt {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use instant::ast::{Stmt, Expr, Opcode};
+    use crate::ast::{Stmt, Expr, Opcode};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     #[allow(unused_imports)]
@@ -2324,7 +2324,7 @@ mod __parse__Stmts {
     #![allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens)]
 
     use std::str::FromStr;
-    use instant::ast::{Stmt, Expr, Opcode};
+    use crate::ast::{Stmt, Expr, Opcode};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     #[allow(unused_imports)]
@@ -3523,7 +3523,7 @@ pub use self::__parse__Stmts::StmtsParser;
 mod __intern_token {
     #![allow(unused_imports)]
     use std::str::FromStr;
-    use instant::ast::{Stmt, Expr, Opcode};
+    use crate::ast::{Stmt, Expr, Opcode};
     #[allow(unused_extern_crates)]
     extern crate lalrpop_util as __lalrpop_util;
     #[allow(unused_imports)]
