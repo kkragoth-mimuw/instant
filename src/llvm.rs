@@ -22,7 +22,10 @@ impl fmt::Display for LLVMResult {
         match self {
             Constant(c) => write!(f, "{}", c),
             Register(r) => write!(f, "%r{}", r),
-            RegisterVar(ident, count) => write!(f, "%{}{}", ident, count)
+            RegisterVar(ident, count) => match ident.as_ref() {
+                "r" => write!(f, "%var__{}{}", ident, count),
+                _ => write!(f, "%{}{}", ident, count)
+            
         }
     }
 }
