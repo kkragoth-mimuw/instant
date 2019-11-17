@@ -33,7 +33,8 @@ FactorOp: Opcode = {
 };
 
 Term: Box<Expr> = {
-    Num => Box::new(Expr::Number(<>)), // (4)
+    Num => Box::new(Expr::Number(<>)),
+    Ident => Box::new(Expr::Ident(<>)),
     "(" <Expr> ")"
 };
 

@@ -1,14 +1,8 @@
-// pub mod ast;
-
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::ast::{Stmt, Expr, Opcode};
+use crate::ast::{Stmt, Expr};
 
-const register_prefix : &str = "r";
-const location_prefix : &str = "loc_";
-
-#[derive(Debug)]
 pub struct LLVMState {
     register_count: usize,
     instructions: Vec<String>,
@@ -16,7 +10,6 @@ pub struct LLVMState {
     var_loc_counts: HashMap<String, i32> 
 }
 
-#[derive(Debug)]
 pub enum LLVMResult {
     Constant(i32),
     Register(usize),
@@ -25,10 +18,11 @@ pub enum LLVMResult {
 
 impl fmt::Display for LLVMResult {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use LLVMResult::{Constant,Register,RegisterVar};
         match self {
-            LLVMResult::Constant(c) => write!(f, "{}", c),
-            LLVMResult::Register(r) => write!(f, "%r{}", r),
-            LLVMResult::RegisterVar(ident, count) => write!(f, "%{}{}", ident, count)
+            Constant(c) => write!(f, "{}", c),
+            Register(r) => write!(f, "%r{}", r),
+            RegisterVar(ident, count) => write!(f, "%{}{}", ident, count)
         }
     }
 }
@@ -43,18 +37,9 @@ impl LLVMState {
         }
     }
 
-    fn generated_code(&self) -> String {
-        self.instructions.join("\n")
-    }
-
     fn get_next_register_number(&mut self) -> usize {
         self.register_count = self.register_count + 1;
         self.register_count
-    }
-
-    fn allocate_variable(&mut self, variable_name : &String) {
-        self.instructions.push(format!("%{}{} = alloca i32",location_prefix, variable_name));
-
     }
 }
 
@@ -81,13 +66,13 @@ fn compile_stmt<'a> (stmt: &Stmt, state: &'a mut LLVMState) {
     match stmt {
         Stmt::SAss(ident, expr) => {
             if let 0 = state.var_loc_map.entry(ident.to_string()).or_insert(0) {
-                state.allocate_variable(ident);
+                state.instructions.push(format!("%loc_{} = alloca i32", ident));
             }
 
             let result = compile_expr(&expr, state);
 
             state.instructions.push(
-                format!("store i32 {}, i32* %{}{}",result, location_prefix, ident)
+                format!("store i32 {}, i32* %loc_{}",result, ident)
             );
 
         },
@@ -111,7 +96,7 @@ fn compile_expr<'a> (expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
             let result = LLVMResult::RegisterVar(ident.to_string(), *count);
 
             state.instructions.push(
-                format!("{} = load i32, i32* {}{}", result, location_prefix,ident)
+                format!("{} = load i32, i32* loc_{}", result, ident)
             );
 
             result
