@@ -47,7 +47,7 @@ pub fn compile(stmts : &Vec<Box<Stmt>>) -> String {
     let instructions = compile_stmts(stmts);
     let prelude = String::from("declare void @printInt(i32)\n
 define i32 @main() {\n\t");
-    let end = "\n}";
+    let end = "\n\tret i32 0\n}";
 
     format!("{}{}{}", prelude, instructions.join("\n\t"), end)
 }
@@ -96,7 +96,7 @@ fn compile_expr<'a> (expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
             let result = LLVMResult::RegisterVar(ident.to_string(), *count);
 
             state.instructions.push(
-                format!("{} = load i32, i32* loc_{}", result, ident)
+                format!("{} = load i32, i32* %loc_{}", result, ident)
             );
 
             result
