@@ -3,6 +3,9 @@ use std::fmt;
 
 use crate::ast::{Stmt, Expr};
 
+const LLVM_PRELUDE : &str = "declare void @printInt(i32)\ndefine i32 @main() {\n\t";
+const LLVM_END : &str = "\n\tret i32 0\n}";
+
 pub struct LLVMState {
     register_count: usize,
     instructions: Vec<String>,
@@ -48,11 +51,8 @@ impl LLVMState {
 
 pub fn compile(stmts : &Vec<Box<Stmt>>) -> String {
     let instructions = compile_stmts(stmts);
-    let prelude = String::from("declare void @printInt(i32)\n
-define i32 @main() {\n\t");
-    let end = "\n\tret i32 0\n}";
 
-    format!("{}{}{}", prelude, instructions.join("\n\t"), end)
+    format!("{}{}{}", LLVM_PRELUDE, instructions.join("\n\t"), LLVM_END)
 }
 
 pub fn compile_stmts(stmts : &Vec<Box<Stmt>>) -> Vec<String> {

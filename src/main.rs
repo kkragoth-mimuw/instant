@@ -26,18 +26,6 @@ fn main() {
     let file_stem = path.file_stem().unwrap();
 
     let generated_code_path = format!("{}/{}.ll", parent.to_string_lossy(), file_stem.to_string_lossy());
-    // let file = fs::File::create(Path::new(generated_code_path))
-        // .expect("Unable to create file");
 
     fs::write(generated_code_path, code).expect("Unable to write to file");
-
-    // file.write_all(code);
-
-    // println!("{}", code);
-
-
-
-    // let b = stmts.for_each(|stmt| );
-
-    // println!("{:?}", b);
 }

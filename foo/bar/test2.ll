@@ -1,5 +1,4 @@
 declare void @printInt(i32)
-
 define i32 @main() {
 	%loc_n = alloca i32
 	store i32 100, i32* %loc_n
