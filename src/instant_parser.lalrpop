@@ -1,0 +1,46 @@
+use std::str::FromStr;
+use instant::ast::{Stmt, Expr, Opcode}; // (0)
+
+grammar;
+
+pub Stmts: Vec<Box<Stmt>> = {
+    <v: (<Stmt> ";")*> => v
+}
+
+pub Stmt: Box<Stmt> = {
+    <lvalue: Ident> "=" <rvalue: Expr> => Box::new(Stmt::SAss(lvalue, rvalue)),
+    Expr => Box::new(Stmt::SExpr(<>)),
+}
+
+pub Expr: Box<Expr> = { // (1)
+    Expr ExprOp Factor => Box::new(Expr::Op(<>)), // (2)
+    Factor,
+};
+
+ExprOp: Opcode = { // (3)
+    "+" => Opcode::Add,
+    "-" => Opcode::Sub,
+};
+
+Factor: Box<Expr> = {
+    Factor FactorOp Term => Box::new(Expr::Op(<>)),
+    Term,
+};
+
+FactorOp: Opcode = {
+    "*" => Opcode::Mul,
+    "/" => Opcode::Div,
+};
+
+Term: Box<Expr> = {
+    Num => Box::new(Expr::Number(<>)), // (4)
+    "(" <Expr> ")"
+};
+
+Ident: String = {
+    r"[[:alpha:]]\w*" => String::from_str(<>).unwrap()
+}
+
+Num: i32 = {
+    r"[0-9]+" => i32::from_str(<>).unwrap()
+};

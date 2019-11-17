@@ -1,3 +1,9 @@
+pub mod instant_parser;
+
 fn main() {
-    println!("Hello, world!");
+    let b = instant_parser::StmtsParser::new()
+        .parse("n = 2; 4;")
+        .unwrap();
+
+    println!("{:?}", b);
 }
