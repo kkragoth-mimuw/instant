@@ -7,6 +7,14 @@ build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "llvm"
+path = "src/main_llvm.rs"
+
+[[bin]]
+name = "jvm"
+path = "src/main_jvm.rs"
+
 [build-dependencies]
 lalrpop = "0.17.2"
 
