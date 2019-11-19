@@ -1,3 +1,4 @@
+use std::cmp;
 use std::collections::HashMap;
 
 use crate::ast::{Stmt, Expr, Opcode};
@@ -13,6 +14,40 @@ struct JVMState {
     instructions: Vec<String>,
     var_index_map: HashMap<String, usize>
 }
+
+enum TaggedStmt<'a> {
+    SAss(&'a String, Box<TaggedExpr<'a>>),
+    SExpr(Box<TaggedExpr<'a>>)
+}
+
+impl<'a> TaggedStmt<'_> {
+    fn get_stmt_stack_size(&self) -> usize {
+        use TaggedStmt::*;
+
+        match self {
+            SAss(_, tagged_expr) => tagged_expr.get_expr_stack_size() + 1,
+            SExpr(tagged_expr) => tagged_expr.get_expr_stack_size() + 2
+        }
+    }
+}
+
+enum TaggedExpr<'a> {
+    Number(i32),
+    Ident(&'a String),
+    Op(Box<TaggedExpr<'a>>, &'a Opcode, Box<TaggedExpr<'a>>, usize)
+}
+
+impl<'a> TaggedExpr<'_> {
+    fn get_expr_stack_size(&self) -> usize {
+        use TaggedExpr::*;
+
+        match *self {
+            Number(_) | Ident(_) => 1,
+            Op(_, _, _, stack_size) => stack_size
+        }
+    }
+}
+
 
 impl JVMState {
     fn new() -> JVMState {
@@ -32,6 +67,13 @@ impl JVMState {
 
         self.instructions.push(push_instruction)
     }
+
+    fn push_get_static_all_print(&mut self) {
+        self.instructions.push(
+            String::from("getstatic  java/lang/System/out Ljava/io/PrintStream;")
+        )
+    }
+
     fn push_call_print(&mut self) {
         self.instructions.push(
             String::from("invokevirtual java/io/PrintStream/println(I)V")
@@ -70,9 +112,7 @@ impl JVMState {
     fn push_store(&mut self, ident: &String) {
         let new_free_slot = self.get_next_free_var_slot();
 
-        // TODO: check how to get mut self reference in closure
-        //       having already mut self reference
-        let i = self.var_index_map.entry(ident.to_string())
+        let i = self.var_index_map.entry(ident.clone())
             .or_insert(new_free_slot);
 
         let push_instruction = match i {
@@ -100,11 +140,50 @@ impl JVMState {
 
 pub fn compile(stmts : &Vec<Box<Stmt>>) -> String {
     let mut state = JVMState::new();
+    
+    let tagged_stmts = tag_stmts(stmts);
 
-    stmts.iter().for_each(|stmt| compile_stmt(&stmt, &mut state));
+    tagged_stmts.iter().for_each(|tagged_stmt| compile_tagged_stmt(&tagged_stmt, &mut state));
 
     state.generate_code()
+
+    // stmts.iter().for_each(|stmt| compile_stmt(&stmt, &mut state));
+
+    // state.generate_code()
+
 }
+
+fn compile_tagged_stmt(stmt: &TaggedStmt, state: &mut JVMState) {
+    use TaggedStmt::* ;
+    match stmt {
+        TaggedStmt::SAss(ident, expr) => {
+            compile_expr(&expr, state);
+            state.push_store(&ident);
+        },
+        TaggedStmt::SExpr(expr) => {
+            compile_expr(&expr, state);
+            state.push_call_print();
+        }
+    }
+    println!("{:?}", stmt)
+}
+
+fn compile_tagged_expr(expr: &TaggedExpr, state: &mut JVMState) {
+    use TaggedExpr::*;
+    match expr {
+        Expr::Number(n) => state.push_constant(*n),
+        Expr::Ident(ident) => {
+            state.push_load(ident)
+        },
+        Expr::Op(l_expr, opcode, r_expr) => {
+            compile_expr(l_expr, state);
+            compile_expr(r_expr, state);
+            state.push_opcode(opcode);
+        }
+    }
+    println!("{:?}", expr)
+}
+
 
 fn compile_stmt(stmt: &Stmt, state: &mut JVMState) {
     match stmt {
@@ -134,6 +213,29 @@ fn compile_expr(expr: &Expr, state: &mut JVMState) {
     }
     println!("{:?}", expr)
 }
-pub fn optimize_stack_length(stmts: &mut Vec<Box<Stmt>>) -> &mut Vec<Box<Stmt>> {
-    stmts
+
+fn tag_stmts(stmts: &Vec<Box<Stmt>>) -> Vec<TaggedStmt> {
+    stmts.iter().map(|stmt| tag_stmt_stack_limit(stmt)).collect()
+}
+
+fn tag_stmt_stack_limit(stmt: &Stmt) -> TaggedStmt {
+    match stmt {
+        Stmt::SAss(ident, expr) => TaggedStmt::SAss(ident, Box::new(tag_expr_stack_limit(expr))),
+        Stmt::SExpr(expr) => TaggedStmt::SExpr(Box::new(tag_expr_stack_limit(expr)))
+    }
+}
+
+fn tag_expr_stack_limit(expr: &Expr) -> TaggedExpr {
+    match expr {
+        Expr::Number(n) => TaggedExpr::Number(*n),
+        Expr::Ident(id) => TaggedExpr::Ident(id),
+        Expr::Op(l_expr, opcode, r_expr) => {
+            let tagged_l_expr = tag_expr_stack_limit(&l_expr);
+            let tagged_r_expr = tag_expr_stack_limit(&r_expr);
+
+            let stack_limit = cmp::min(tagged_l_expr.get_expr_stack_size(), tagged_r_expr.get_expr_stack_size()) + 1;
+
+            TaggedExpr::Op(Box::new(tagged_l_expr), opcode, Box::new(tagged_r_expr), stack_limit)
+        }
+    }
 }
