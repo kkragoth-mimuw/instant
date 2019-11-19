@@ -2,19 +2,19 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
-pub mod instant_parser;
 pub mod ast;
+pub mod instant_parser;
 pub mod jvm;
 
 fn main() {
     if true {
         let stmts = instant_parser::StmtsParser::new()
-        .parse("n=2+2;n;")
-        .unwrap();
+            .parse("n=2+2;n;")
+            .unwrap();
 
         println!("{}", jvm::compile(&stmts));
     }
-    
+
     // if false {
     // let args: Vec<String> = env::args().collect();
 
@@ -26,7 +26,6 @@ fn main() {
     // let stmts = instant_parser::StmtsParser::new()
     //     .parse(&contents)
     //     .unwrap();
-
 
     // let code = jvm:compile(&stmts);
 

@@ -23,12 +23,12 @@ pub enum Opcode {
 
 impl fmt::Display for Opcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Opcode::{Add, Sub, Mul, Div};
+        use Opcode::{Add, Div, Mul, Sub};
         match self {
             Add => write!(f, "add i32"),
             Sub => write!(f, "sub i32"),
             Mul => write!(f, "mul i32"),
-            Div => write!(f, "div i32")
+            Div => write!(f, "div i32"),
         }
     }
 }
