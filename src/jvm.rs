@@ -3,13 +3,6 @@ use std::collections::HashMap;
 
 use crate::ast::{Stmt, Expr, Opcode};
 
-mod jvm_label {
-    pub const MAIN_FUNC_HEADER: &str = ".method public static main([Ljava/lang/String;)V\n";
-    pub const STACK_LIMIT: &str      = ".limit stack {}\n";
-    pub const GET_PRINT: &str        = "\tgetstatic  java/lang/System/out Ljava/io/PrintStream;\n\t";
-    pub const END_FUNC: &str         = "\n.end method\n";
-}
-
 struct JVMState {
     instructions: Vec<String>,
     var_index_map: HashMap<String, usize>
@@ -127,29 +120,31 @@ impl JVMState {
         self.instructions.push(String::from("swap"))
     }
 
-    fn generate_code(&self) -> String {
-        use jvm_label::*;
-
+    fn generate_code(&self, limit_stack: usize) -> String {
         let instructions = self.instructions.join("\n\t");
 
-        format!("{}{}{}{}{}",
-             MAIN_FUNC_HEADER,
-             STACK_LIMIT,
-             GET_PRINT,
+        format!("{}{}{}{}",
+             String::from(".method public static main([Ljava/lang/String;)V\n"),
+             format!(".limit stack {}\n", limit_stack),
              instructions,
-             END_FUNC
+             String::from("\n.end method\n")
         )
     }
 }
 
 pub fn compile(stmts : &Vec<Box<Stmt>>) -> String {
     let mut state = JVMState::new();
+    let mut limit_stack = 0;
     
     let tagged_stmts = tag_stmts(stmts);
 
-    tagged_stmts.iter().for_each(|tagged_stmt| compile_tagged_stmt(&tagged_stmt, &mut state));
+    tagged_stmts.iter().for_each(|tagged_stmt| {
+        limit_stack = cmp::max(limit_stack, tagged_stmt.get_stmt_stack_size());
 
-    state.generate_code()
+        compile_tagged_stmt(&tagged_stmt, &mut state);
+    });
+
+    state.generate_code(limit_stack)
 }
 
 fn compile_tagged_stmt(stmt: &TaggedStmt, state: &mut JVMState) {
@@ -160,7 +155,15 @@ fn compile_tagged_stmt(stmt: &TaggedStmt, state: &mut JVMState) {
             state.push_store(&ident);
         },
         SExpr(expr) => {
-            compile_tagged_expr(&expr, state);
+            if expr.get_expr_stack_size() == 1 {
+                state.push_get_static_all_print();
+                compile_tagged_expr(&expr, state);
+            } else {
+                compile_tagged_expr(&expr, state);
+                state.push_get_static_all_print();
+                state.push_swap();
+            }
+            
             state.push_call_print();
         }
     }
@@ -201,36 +204,6 @@ fn compile_tagged_expr(expr: &TaggedExpr, state: &mut JVMState) {
             state.push_opcode(opcode);
         }
     }
-}
-
-
-fn compile_stmt(stmt: &Stmt, state: &mut JVMState) {
-    match stmt {
-        Stmt::SAss(ident, expr) => {
-            compile_expr(&expr, state);
-            state.push_store(&ident);
-        },
-        Stmt::SExpr(expr) => {
-            compile_expr(&expr, state);
-            state.push_call_print();
-        }
-    }
-    println!("{:?}", stmt)
-}
-
-fn compile_expr(expr: &Expr, state: &mut JVMState) {
-    match expr {
-        Expr::Number(n) => state.push_constant(*n),
-        Expr::Ident(ident) => {
-            state.push_load(ident)
-        },
-        Expr::Op(l_expr, opcode, r_expr) => {
-            compile_expr(l_expr, state);
-            compile_expr(r_expr, state);
-            state.push_opcode(opcode);
-        }
-    }
-    println!("{:?}", expr)
 }
 
 fn tag_stmts(stmts: &Vec<Box<Stmt>>) -> Vec<TaggedStmt> {
