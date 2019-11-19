@@ -80,7 +80,7 @@ enum LLVMResult {
 
 impl fmt::Display for LLVMResult {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use LLVMResult::{Constant, Register, RegisterVar};
+        use LLVMResult::*;
         match self {
             Constant(c) => write!(f, "{}", c),
             Register(r) => write!(f, "%r{}", r),
@@ -115,6 +115,7 @@ fn compile_stmt(stmt: &Stmt, state: &mut LLVMState) {
 
 fn compile_expr<'a>(expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
     use Expr::*;
+    use LLVMResult::*;
 
     match expr {
         Number(n) => LLVMResult::Constant(*n),
@@ -125,7 +126,7 @@ fn compile_expr<'a>(expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
                 .and_modify(|c| *c += 1)
                 .or_insert(0);
 
-            let result = LLVMResult::RegisterVar(ident.clone(), *count);
+            let result = RegisterVar(ident.clone(), *count);
 
             state.load(&result, ident);
 
@@ -134,7 +135,7 @@ fn compile_expr<'a>(expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
         Op(l_expr, opcode, r_expr) => {
             let (l, r) = (compile_expr(l_expr, state), compile_expr(r_expr, state));
 
-            let result = LLVMResult::Register(state.get_next_register_number());
+            let result = Register(state.get_next_register_number());
 
             state.arithmetic(&result, opcode, &l, &r);
 
