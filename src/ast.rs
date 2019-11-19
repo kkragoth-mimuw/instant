@@ -25,10 +25,10 @@ impl fmt::Display for Opcode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Opcode::{Add, Div, Mul, Sub};
         match self {
-            Add => write!(f, "add i32"),
-            Sub => write!(f, "sub i32"),
-            Mul => write!(f, "mul i32"),
-            Div => write!(f, "div i32"),
+            Add => write!(f, "add"),
+            Sub => write!(f, "sub"),
+            Mul => write!(f, "mul"),
+            Div => write!(f, "idiv"),
         }
     }
 }

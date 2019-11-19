@@ -36,6 +36,19 @@ impl JVMState {
             var_index_map: HashMap::new(),
         }
     }
+
+    fn generate_code(&self, limit_stack: usize) -> String {
+        let instructions = self.instructions.join("\n\t");
+
+        format!(
+            "{}{}{}{}",
+            String::from(".method public static main([Ljava/lang/String;)V\n"),
+            format!(".limit stack {}\n", limit_stack),
+            instructions,
+            String::from("\n.end method\n")
+        )
+    }
+
     fn push_constant(&mut self, n: i32) {
         let push_instruction = match n {
             -1 => String::from("iconst_m1"),
@@ -105,18 +118,6 @@ impl JVMState {
 
     fn push_swap(&mut self) {
         self.instructions.push(String::from("swap"))
-    }
-
-    fn generate_code(&self, limit_stack: usize) -> String {
-        let instructions = self.instructions.join("\n\t");
-
-        format!(
-            "{}{}{}{}",
-            String::from(".method public static main([Ljava/lang/String;)V\n"),
-            format!(".limit stack {}\n", limit_stack),
-            instructions,
-            String::from("\n.end method\n")
-        )
     }
 
     fn get_next_free_var_slot(&self) -> usize {

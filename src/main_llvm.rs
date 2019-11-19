@@ -9,7 +9,9 @@ pub mod llvm;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let filename = args.get(1).expect("No filename present");
+    let filename = args
+        .get(1)
+        .expect("No filename present. Please specify filename as argument");
 
     let contents = fs::read_to_string(filename).expect("Error reading file");
 

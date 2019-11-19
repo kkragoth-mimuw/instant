@@ -7,34 +7,27 @@ pub mod instant_parser;
 pub mod jvm;
 
 fn main() {
-    if true {
-        let stmts = instant_parser::StmtsParser::new()
-            .parse("n=2+2;n;")
-            .unwrap();
+    let args: Vec<String> = env::args().collect();
 
-        println!("{}", jvm::compile(&stmts));
-    }
+    let filename = args
+        .get(1)
+        .expect("No filename present. Please specify filename as argument");
 
-    // if false {
-    // let args: Vec<String> = env::args().collect();
+    let contents = fs::read_to_string(filename).expect("Error reading file");
 
-    // let filename = args.get(1).expect("No filename present");
+    let stmts = instant_parser::StmtsParser::new().parse(&contents).unwrap();
 
-    // let contents = fs::read_to_string(filename)
-    //     .expect("Error reading file");
+    let code = jvm::compile(&stmts);
 
-    // let stmts = instant_parser::StmtsParser::new()
-    //     .parse(&contents)
-    //     .unwrap();
+    let path = Path::new(filename);
+    let parent = path.parent().unwrap();
+    let file_stem = path.file_stem().unwrap();
 
-    // let code = jvm:compile(&stmts);
+    let generated_code_path = format!(
+        "{}/{}.j",
+        parent.to_string_lossy(),
+        file_stem.to_string_lossy()
+    );
 
-    // let path = Path::new(filename);
-    // let parent = path.parent().unwrap();
-    // let file_stem = path.file_stem().unwrap();
-
-    // let generated_code_path = format!("{}/{}.ll", parent.to_string_lossy(), file_stem.to_string_lossy());
-
-    // fs::write(generated_code_path, code).expect("Unable to write to file");
-    // }
+    fs::write(generated_code_path, code).expect("Unable to write to file");
 }

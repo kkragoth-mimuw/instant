@@ -1,19 +1,78 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::ast::{Expr, Stmt};
+use crate::ast::{Expr, Opcode, Stmt};
 
-const LLVM_PRELUDE: &str = "declare void @printInt(i32)\ndefine i32 @main() {\n\t";
-const LLVM_END: &str = "\n\tret i32 0\n}";
+pub fn compile(stmts: &Vec<Box<Stmt>>) -> String {
+    let mut state = LLVMState::new();
 
-pub struct LLVMState {
+    stmts
+        .iter()
+        .for_each(|stmt| compile_stmt(&stmt, &mut state));
+
+    state.generate_code()
+}
+
+struct LLVMState {
     register_count: usize,
     instructions: Vec<String>,
     var_loc_map: HashMap<String, i32>,
     var_loc_counts: HashMap<String, i32>,
 }
 
-pub enum LLVMResult {
+impl LLVMState {
+    fn new() -> LLVMState {
+        LLVMState {
+            register_count: 0,
+            instructions: vec![],
+            var_loc_map: HashMap::new(),
+            var_loc_counts: HashMap::new(),
+        }
+    }
+
+    fn generate_code(&self) -> String {
+        let instructions = self.instructions.join("\n\t");
+
+        format!(
+            "{}{}{}",
+            String::from("declare void @printInt(i32)\ndefine i32 @main() {\n\t"),
+            instructions,
+            String::from("\n\tret i32 0\n}")
+        )
+    }
+
+    fn get_next_register_number(&mut self) -> usize {
+        self.register_count = self.register_count + 1;
+        self.register_count
+    }
+
+    fn alloca(&mut self, ident: &String) {
+        self.instructions
+            .push(format!("%loc_{} = alloca i32", ident))
+    }
+
+    fn store(&mut self, result: LLVMResult, ident: &String) {
+        self.instructions
+            .push(format!("store i32 {}, i32* %loc_{}", result, ident));
+    }
+
+    fn print(&mut self, result: LLVMResult) {
+        self.instructions
+            .push(format!("call void @printInt(i32 {})", result));
+    }
+
+    fn load(&mut self, result: &LLVMResult, ident: &String) {
+        self.instructions
+            .push(format!("{} = load i32, i32* %loc_{}", result, ident))
+    }
+
+    fn arithmetic(&mut self, result: &LLVMResult, opcode: &Opcode, l: &LLVMResult, r: &LLVMResult) {
+        self.instructions
+            .push(format!("{} = {} i32 {}, {}", result, opcode, l, r));
+    }
+}
+
+enum LLVMResult {
     Constant(i32),
     Register(usize),
     RegisterVar(String, i32),
@@ -33,87 +92,51 @@ impl fmt::Display for LLVMResult {
     }
 }
 
-impl LLVMState {
-    fn new() -> LLVMState {
-        LLVMState {
-            register_count: 0,
-            instructions: vec![],
-            var_loc_map: HashMap::new(),
-            var_loc_counts: HashMap::new(),
-        }
-    }
+fn compile_stmt(stmt: &Stmt, state: &mut LLVMState) {
+    use Stmt::*;
 
-    fn get_next_register_number(&mut self) -> usize {
-        self.register_count = self.register_count + 1;
-        self.register_count
-    }
-}
-
-pub fn compile(stmts: &Vec<Box<Stmt>>) -> String {
-    let instructions = compile_stmts(stmts);
-
-    format!("{}{}{}", LLVM_PRELUDE, instructions.join("\n\t"), LLVM_END)
-}
-
-pub fn compile_stmts(stmts: &Vec<Box<Stmt>>) -> Vec<String> {
-    let mut state = LLVMState::new();
-
-    for stmt in stmts.iter() {
-        compile_stmt(&stmt, &mut state);
-    }
-
-    state.instructions
-}
-
-fn compile_stmt<'a>(stmt: &Stmt, state: &'a mut LLVMState) {
     match stmt {
-        Stmt::SAss(ident, expr) => {
-            if let 0 = state.var_loc_map.entry(ident.to_string()).or_insert(0) {
-                state
-                    .instructions
-                    .push(format!("%loc_{} = alloca i32", ident));
+        SAss(ident, expr) => {
+            if let 0 = state.var_loc_map.entry(ident.clone()).or_insert(0) {
+                state.alloca(ident);
             }
 
             let result = compile_expr(&expr, state);
 
-            state
-                .instructions
-                .push(format!("store i32 {}, i32* %loc_{}", result, ident));
+            state.store(result, ident);
         }
-        Stmt::SExpr(expr) => {
+        SExpr(expr) => {
             let result = compile_expr(&expr, state);
 
-            state
-                .instructions
-                .push(format!("call void @printInt(i32 {})", result));
+            state.print(result);
         }
     }
 }
 
 fn compile_expr<'a>(expr: &Expr, state: &'a mut LLVMState) -> LLVMResult {
+    use Expr::*;
+
     match expr {
-        Expr::Number(n) => LLVMResult::Constant(*n),
-        Expr::Ident(ident) => {
-            let count = state.var_loc_counts.entry(ident.to_string()).or_insert(0);
-            *count += 1;
+        Number(n) => LLVMResult::Constant(*n),
+        Ident(ident) => {
+            let count = state
+                .var_loc_counts
+                .entry(ident.clone())
+                .and_modify(|c| *c += 1)
+                .or_insert(0);
 
-            let result = LLVMResult::RegisterVar(ident.to_string(), *count);
+            let result = LLVMResult::RegisterVar(ident.clone(), *count);
 
-            state
-                .instructions
-                .push(format!("{} = load i32, i32* %loc_{}", result, ident));
+            state.load(&result, ident);
 
             result
         }
-        Expr::Op(l_expr, opcode, r_expr) => {
-            let l1 = compile_expr(l_expr, state);
-            let l2 = compile_expr(r_expr, state);
+        Op(l_expr, opcode, r_expr) => {
+            let (l, r) = (compile_expr(l_expr, state), compile_expr(r_expr, state));
 
             let result = LLVMResult::Register(state.get_next_register_number());
 
-            state
-                .instructions
-                .push(format!("{} = {} {}, {}", result, opcode, l1, l2));
+            state.arithmetic(&result, opcode, &l, &r);
 
             result
         }
