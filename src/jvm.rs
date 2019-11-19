@@ -123,6 +123,10 @@ impl JVMState {
         self.instructions.push(push_instruction);
     }
 
+    fn push_swap(&mut self) {
+        self.instructions.push(String::from("swap"))
+    }
+
     fn generate_code(&self) -> String {
         use jvm_label::*;
 
@@ -146,42 +150,57 @@ pub fn compile(stmts : &Vec<Box<Stmt>>) -> String {
     tagged_stmts.iter().for_each(|tagged_stmt| compile_tagged_stmt(&tagged_stmt, &mut state));
 
     state.generate_code()
-
-    // stmts.iter().for_each(|stmt| compile_stmt(&stmt, &mut state));
-
-    // state.generate_code()
-
 }
 
 fn compile_tagged_stmt(stmt: &TaggedStmt, state: &mut JVMState) {
-    use TaggedStmt::* ;
+    use TaggedStmt::*;
     match stmt {
-        TaggedStmt::SAss(ident, expr) => {
-            compile_expr(&expr, state);
+        SAss(ident, expr) => {
+            compile_tagged_expr(&expr, state);
             state.push_store(&ident);
         },
-        TaggedStmt::SExpr(expr) => {
-            compile_expr(&expr, state);
+        SExpr(expr) => {
+            compile_tagged_expr(&expr, state);
             state.push_call_print();
         }
     }
-    println!("{:?}", stmt)
 }
 
 fn compile_tagged_expr(expr: &TaggedExpr, state: &mut JVMState) {
     use TaggedExpr::*;
     match expr {
-        Expr::Number(n) => state.push_constant(*n),
-        Expr::Ident(ident) => {
+        Number(n) => state.push_constant(*n),
+        Ident(ident) => {
             state.push_load(ident)
         },
-        Expr::Op(l_expr, opcode, r_expr) => {
-            compile_expr(l_expr, state);
-            compile_expr(r_expr, state);
+        Op(l_expr, opcode, r_expr, _) => {
+            let swap_occured: bool;
+
+            let first_expr : &TaggedExpr;
+            let second_expr: &TaggedExpr;
+
+            if l_expr.get_expr_stack_size() <= r_expr.get_expr_stack_size() {
+                swap_occured = false;
+
+                first_expr = l_expr;
+                second_expr = r_expr;
+            } else {
+                swap_occured = true;
+
+                first_expr = r_expr;
+                second_expr = l_expr;
+            }
+
+            compile_tagged_expr(first_expr, state);
+            compile_tagged_expr(second_expr, state);
+
+            if swap_occured && (**opcode == Opcode::Sub || **opcode == Opcode::Div) {
+                state.push_swap();
+            }
+
             state.push_opcode(opcode);
         }
     }
-    println!("{:?}", expr)
 }
 
 

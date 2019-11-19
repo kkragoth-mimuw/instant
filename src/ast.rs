@@ -13,7 +13,7 @@ pub enum Expr {
     Op(Box<Expr>, Opcode, Box<Expr>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Opcode {
     Add,
     Sub,
