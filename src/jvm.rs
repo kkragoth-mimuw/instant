@@ -43,8 +43,8 @@ impl JVMState {
         format!(
             "{}{}{}{}{}{}{}",
             format!(".class public {}\n", class_name),
-            String::from(".method public <init>()V\naload_0\ninvokespecial java/lang/Object/<init>()V\nreturn\n.end method\n"),
             String::from(".super  java/lang/Object\n"),
+            String::from(".method public <init>()V\n\taload_0\n\tinvokespecial java/lang/Object/<init>()V\n\treturn\n.end method\n"),
             String::from(".method public static main([Ljava/lang/String;)V\n"),
             format!(".limit stack {}\n", limit_stack),
             instructions,
