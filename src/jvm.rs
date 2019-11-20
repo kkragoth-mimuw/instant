@@ -48,7 +48,7 @@ impl JVMState {
             String::from(".method public <init>()V\n\taload_0\n\tinvokespecial java/lang/Object/<init>()V\n\treturn\n.end method\n"),
             String::from(".method public static main([Ljava/lang/String;)V\n"),
             format!(".limit stack {}\n", limit_stack),
-            format!(".limit locals {}\n", limit_locals),
+            format!(".limit locals {}\n\t", limit_locals),
             instructions,
             String::from("\n\treturn\n.end method\n")
         )

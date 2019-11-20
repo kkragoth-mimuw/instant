@@ -37,7 +37,7 @@ impl LLVMState {
             "{}{}{}",
             String::from("declare void @printInt(i32)\ndefine i32 @main() {\n\t"),
             instructions,
-            String::from("\n\tret i32 0\n}")
+            String::from("\n\tret i32 0\n}\n")
         )
     }
 
