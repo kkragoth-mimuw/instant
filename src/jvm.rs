@@ -41,13 +41,14 @@ impl JVMState {
         let instructions = self.instructions.join("\n\t");
 
         format!(
-            "{}{}{}{}{}{}",
+            "{}{}{}{}{}{}{}",
             format!(".class public {}\n", class_name),
+            String::from(".method public <init>()V\naload_0\ninvokespecial java/lang/Object/<init>()V\nreturn\n.end method\n"),
             String::from(".super  java/lang/Object\n"),
             String::from(".method public static main([Ljava/lang/String;)V\n"),
             format!(".limit stack {}\n", limit_stack),
             instructions,
-            String::from("\n.end method\n")
+            String::from("\n\treturn\n.end method\n")
         )
     }
 
