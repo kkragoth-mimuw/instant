@@ -28,7 +28,7 @@ impl fmt::Display for Opcode {
             Add => write!(f, "add"),
             Sub => write!(f, "sub"),
             Mul => write!(f, "mul"),
-            Div => write!(f, "idiv"),
+            Div => write!(f, "sdiv"),
         }
     }
 }
