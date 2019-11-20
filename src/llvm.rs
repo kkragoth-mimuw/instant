@@ -97,7 +97,9 @@ fn compile_stmt(stmt: &Stmt, state: &mut LLVMState) {
 
     match stmt {
         SAss(ident, expr) => {
-            if let 0 = state.var_loc_map.entry(ident.clone()).or_insert(0) {
+            if let 0 = state.var_loc_map.entry(ident.clone())
+                .and_modify(|c| *c += 1)
+                .or_insert(0) {
                 state.alloca(ident);
             }
 
