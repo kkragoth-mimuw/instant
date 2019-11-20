@@ -17,7 +17,7 @@ done
 cd foo/bar;
 
 for x in ${tests[*]}; do
-	lli test$x_linked.bc
+	lli test$x.bc
 done
 
 cd ../..
@@ -51,6 +51,11 @@ fn main() {
         parent_str => format!("{}/{}_intermediate.bc", parent_str, file_stem)
     };
 
+    let generated_linked_bc_path = match parent {
+        "" => format!("{}.bc", file_stem),
+        parent_str => format!("{}/{}.bc", parent_str, file_stem)
+    };
+
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
     Command::new("llvm-as")
@@ -59,7 +64,7 @@ fn main() {
         .expect("failed to execute llvm-as");
 
     Command::new("llvm-link")
-        .args(&["-o", &generated_code_path, &generated_intermediate_bc_path, "lib/runtime.bc"])
+        .args(&["-o", &generated_linked_bc_path, &generated_intermediate_bc_path, "lib/runtime.bc"])
         .output()
         .expect("failed to execute llvm-as");
 
