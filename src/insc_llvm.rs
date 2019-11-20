@@ -42,19 +42,13 @@ fn main() {
 
     let generated_code_path = match parent {
         "" => format!("{}.ll", file_stem),
-        parent_str => {
-            println!("some parent");
-            format!("{}/{}.ll", parent_str, file_stem)
-        }
+        parent_str => format!("{}/{}.ll", parent_str, file_stem)
     };
 
 
     let generated_bc_path = match parent {
         "" => format!("{}.bc", file_stem),
-        parent_str => {
-            println!("some parent");
-            format!("{}/{}.bc", parent_str, file_stem)
-        }
+        parent_str => format!("{}/{}.bc", parent_str, file_stem)
     };
 
     fs::write(&generated_code_path, code).expect("Unable to write to file");
