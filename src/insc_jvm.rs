@@ -48,7 +48,7 @@ fn main() {
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
     Command::new("java")
-        .args(&["-jar", "./lib/jasmin", &generated_code_path])
+        .args(&["-jar", "lib/jasmin", &generated_code_path])
         .output()
         .expect("failed to execute java/jasmin");
 }
