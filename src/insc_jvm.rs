@@ -9,7 +9,7 @@ pub mod jvm;
 
 
 /*
-tests = (01 02 03 04 05 06 07)
+tests=(01 02 03 04 05 06 07)
 
 for x in ${tests[*]}; do
     ./insc_jvm foo/bar/test$x.ins
