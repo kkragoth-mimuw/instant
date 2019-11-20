@@ -47,13 +47,13 @@ fn main() {
 
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
-    let jasmin_output_dir_arg = match parent {
-        "" => String::from(""),
-        parent_str => format!("-d {}", parent_str)
+    let args = match parent {
+        "" => ["-jar", "lib/jasmin.jar", "", "", &generated_code_path],
+        parent_str => ["-jar", "lib/jasmin.jar", "-d", &parent_str, &generated_code_path]
     };
 
     Command::new("java")
-        .args(&["-jar", "lib/jasmin.jar", &jasmin_output_dir_arg, &generated_code_path])
+        .args(&args)
         .output()
         .expect("failed to execute java/jasmin");
 }
