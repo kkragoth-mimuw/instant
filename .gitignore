@@ -1,2 +1,4 @@
 /target
 **/*.rs.bk
+insc_jvm
+insc_llvm
