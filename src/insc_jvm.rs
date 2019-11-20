@@ -48,7 +48,7 @@ fn main() {
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
     let args = match parent {
-        "" => ["-jar", "lib/jasmin.jar", "", "", &generated_code_path],
+        "" => ["-jar", "lib/jasmin.jar", "-d", ".", &generated_code_path],
         parent_str => ["-jar", "lib/jasmin.jar", "-d", &parent_str, &generated_code_path]
     };
 
