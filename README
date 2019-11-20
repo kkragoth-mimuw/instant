@@ -1,0 +1,13 @@
+* Compiler is written using Rust (https://www.rust-lang.org/learn/get-started)
+
+To install Rust on students run:
+$ wget -O rustup.sh https://sh.rustup.rs && sh rustup.sh -y
+
+If during compiling there is problem with cargo build:
+error: no default toolchain configured
+
+please run
+$ rustup install stable
+$ rustup default stable
+
+* I'm using larlpop library (https://github.com/lalrpop/lalrpop) to parse and generate ast.
