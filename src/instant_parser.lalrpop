@@ -4,7 +4,14 @@ use crate::ast::{Stmt, Expr, Opcode}; // (0)
 grammar;
 
 pub Stmts: Vec<Box<Stmt>> = {
-    <v: (<Stmt> ";")*> => v
+    <v: (<Stmt> ";")*> <e: Stmt?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
 }
 
 pub Stmt: Box<Stmt> = {
