@@ -39,14 +39,16 @@ impl JVMState {
 
     fn generate_code(&self, class_name: &std::borrow::Cow<'_, str>, limit_stack: usize) -> String {
         let instructions = self.instructions.join("\n\t");
+        let limit_locals = self.var_index_map.len() + 1;
 
         format!(
-            "{}{}{}{}{}{}{}",
+            "{}{}{}{}{}{}{}{}",
             format!(".class public {}\n", class_name),
             String::from(".super  java/lang/Object\n"),
             String::from(".method public <init>()V\n\taload_0\n\tinvokespecial java/lang/Object/<init>()V\n\treturn\n.end method\n"),
             String::from(".method public static main([Ljava/lang/String;)V\n"),
             format!(".limit stack {}\n", limit_stack),
+            format!(".limit locals {}\n", limit_locals),
             instructions,
             String::from("\n\treturn\n.end method\n")
         )
