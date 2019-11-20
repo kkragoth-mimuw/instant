@@ -7,6 +7,22 @@ pub mod ast;
 pub mod instant_parser;
 pub mod llvm;
 
+/*
+tests = (01 02 03 04 05 06 07)
+
+for x in ${tests[*]}; do
+    ./insc_llvm foo/bar/test$x.ins
+done
+
+cd foo/bar;
+
+for x in ${tests[*]}; do
+	llvm-as -o test$x.bc test$x.ll
+	llvm-link -o test$x_linked.bc test$x.bc runtime.bc
+	lli test$x_linked.bc
+done
+*/
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -21,25 +37,30 @@ fn main() {
     let code = llvm::compile(&stmts);
 
     let path = Path::new(filename);
-    let parent = path.parent().unwrap();
-    let file_stem = path.file_stem().unwrap();
+    let file_stem = path.file_stem().expect("Unable to get file stem").to_str().unwrap();
+    let parent = path.parent().unwrap().to_str().expect("Error getting parent");
 
-    let generated_code_path = format!(
-        "{}/{}.ll",
-        parent.to_string_lossy(),
-        file_stem.to_string_lossy()
-    );
+    let generated_code_path = match parent {
+        "" => format!("{}.ll", file_stem),
+        parent_str => {
+            println!("some parent");
+            format!("{}/{}.ll", parent_str, file_stem)
+        }
+    };
 
-    let generated_code_path_bc_output = format!(
-        "{}/{}.bc",
-        parent.to_string_lossy(),
-        file_stem.to_string_lossy()
-    );
+
+    let generated_bc_path = match parent {
+        "" => format!("{}.bc", file_stem),
+        parent_str => {
+            println!("some parent");
+            format!("{}/{}.bc", parent_str, file_stem)
+        }
+    };
 
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
     Command::new("llvm-as")
-        .args(&["-o", &generated_code_path_bc_output[..], &generated_code_path[..]])
+        .args(&["-o", &generated_bc_path, &generated_code_path])
         .output()
-        .expect("failed to execute java/jasmin");
+        .expect("failed to execute llvm-as");
 }
