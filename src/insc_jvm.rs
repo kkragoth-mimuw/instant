@@ -17,16 +17,18 @@ fn main() {
 
     let stmts = instant_parser::StmtsParser::new().parse(&contents).unwrap();
 
-    let code = jvm::compile(&stmts);
-
     let path = Path::new(filename);
     let parent = path.parent().unwrap();
     let file_stem = path.file_stem().unwrap();
 
+    let file_stem = file_stem.to_string_lossy();
+
+    let code = jvm::compile(&stmts, &file_stem);
+
     let generated_code_path = format!(
         "{}/{}.j",
         parent.to_string_lossy(),
-        file_stem.to_string_lossy()
+        file_stem
     );
 
     fs::write(generated_code_path, code).expect("Unable to write to file");

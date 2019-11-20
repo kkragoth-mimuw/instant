@@ -7,7 +7,7 @@ use crate::ast::{Expr, Opcode, Stmt};
 // but it is my first time programming in Rust and I wanted to try how could I wrap around predefined enums.
 // In Haskell or anything with GC it's straightforward but in Rust I wanted to create move semantic instead of copying stuff all the time
 // See definitions of enums: TaggedStmt and TaggedExpr for reference and signature of life time specifiers for implementations
-pub fn compile(stmts: &Vec<Box<Stmt>>) -> String {
+pub fn compile(stmts: &Vec<Box<Stmt>>, class_name: &std::borrow::Cow<'_, str>) -> String {
     let mut state = JVMState::new();
     let mut limit_stack = 0;
 
@@ -21,7 +21,7 @@ pub fn compile(stmts: &Vec<Box<Stmt>>) -> String {
         compile_tagged_stmt(&tagged_stmt, &mut state);
     });
 
-    state.generate_code(limit_stack)
+    state.generate_code(class_name, limit_stack)
 }
 
 struct JVMState {
@@ -37,11 +37,13 @@ impl JVMState {
         }
     }
 
-    fn generate_code(&self, limit_stack: usize) -> String {
+    fn generate_code(&self, class_name: &std::borrow::Cow<'_, str>, limit_stack: usize) -> String {
         let instructions = self.instructions.join("\n\t");
 
         format!(
-            "{}{}{}{}",
+            "{}{}{}{}{}{}",
+            format!(".class public {}\n", class_name),
+            String::from(".super  java/lang/Object\n"),
             String::from(".method public static main([Ljava/lang/String;)V\n"),
             format!(".limit stack {}\n", limit_stack),
             instructions,
