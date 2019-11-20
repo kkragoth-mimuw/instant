@@ -20,6 +20,8 @@ cd foo/bar;
 for x in ${tests[*]}; do
 	java test$x
 done
+
+cd ../..
 */
 
 

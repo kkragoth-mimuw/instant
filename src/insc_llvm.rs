@@ -17,10 +17,11 @@ done
 cd foo/bar;
 
 for x in ${tests[*]}; do
-	llvm-as -o test$x.bc test$x.ll
-	llvm-link -o test$x_linked.bc test$x.bc runtime.bc
 	lli test$x_linked.bc
 done
+
+cd ../..
+
 */
 
 fn main() {
@@ -45,16 +46,20 @@ fn main() {
         parent_str => format!("{}/{}.ll", parent_str, file_stem)
     };
 
-
-    let generated_bc_path = match parent {
-        "" => format!("{}.bc", file_stem),
-        parent_str => format!("{}/{}.bc", parent_str, file_stem)
+    let generated_intermediate_bc_path = match parent {
+        "" => format!("{}_intermediate.bc", file_stem),
+        parent_str => format!("{}/{}_intermediate.bc", parent_str, file_stem)
     };
 
     fs::write(&generated_code_path, code).expect("Unable to write to file");
 
     Command::new("llvm-as")
-        .args(&["-o", &generated_bc_path, &generated_code_path])
+        .args(&["-o", &generated_intermediate_bc_path, &generated_code_path])
+        .output()
+        .expect("failed to execute llvm-as");
+
+    Command::new("llvm-link")
+        .args(&["-o", &generated_code_path, &generated_intermediate_bc_path, "lib/runtime.bc"])
         .output()
         .expect("failed to execute llvm-as");
 }
