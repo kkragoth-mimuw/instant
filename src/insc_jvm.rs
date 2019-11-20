@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 pub mod ast;
 pub mod instant_parser;
@@ -31,5 +32,10 @@ fn main() {
         file_stem
     );
 
-    fs::write(generated_code_path, code).expect("Unable to write to file");
+    fs::write(&generated_code_path, code).expect("Unable to write to file");
+
+    Command::new("java")
+        .args(&["./lib/jasmin", &generated_code_path[..]])
+        .output()
+        .expect("failed to execute java/jasmin");
 }

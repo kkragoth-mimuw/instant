@@ -1,6 +1,7 @@
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 pub mod ast;
 pub mod instant_parser;
@@ -29,5 +30,16 @@ fn main() {
         file_stem.to_string_lossy()
     );
 
-    fs::write(generated_code_path, code).expect("Unable to write to file");
+    let generated_code_path_bc_output = format!(
+        "{}/{}.bc",
+        parent.to_string_lossy(),
+        file_stem.to_string_lossy()
+    );
+
+    fs::write(&generated_code_path, code).expect("Unable to write to file");
+
+    Command::new("llvm-as")
+        .args(&["-o", &generated_code_path_bc_output[..], &generated_code_path[..]])
+        .output()
+        .expect("failed to execute java/jasmin");
 }
