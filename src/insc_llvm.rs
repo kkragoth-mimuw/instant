@@ -62,4 +62,9 @@ fn main() {
         .args(&["-o", &generated_code_path, &generated_intermediate_bc_path, "lib/runtime.bc"])
         .output()
         .expect("failed to execute llvm-as");
+
+    Command::new("rm")
+        .args(&["-f", &generated_intermediate_bc_path])
+        .output()
+        .expect("failed to remove intermediate code");
 }
